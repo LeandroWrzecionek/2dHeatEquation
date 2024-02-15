@@ -1,0 +1,73 @@
+import numpy as np
+import  pandas
+import math as c
+import matplotlib.pyplot as plt
+from scipy.linalg import solve
+
+t=10 #tempo
+L = 1 #aresta da chapa (m)
+Ta = 800 #temperatura do círculo
+T0 = 200 #temperatura inicial da chapa
+Tr = 0 #resfriamento
+
+#Parâmetros do MDF
+pt = 100 #tamanho da malha
+h = dx = dy = L/pt #deltas
+dt = 0.01
+dx2, dy2 = dx**2, dy**2
+alpha= 0.01
+betha = 1 + (4*dt*alpha)/(h**2)
+omega = -alpha*dt/(h**2)
+
+#setando condição inicial
+T = np.zeros((pt,pt))
+T[1:pt-1, 1:pt-1]=T0
+re = pt//3
+ri = pt//4
+cx, cy = pt//2, pt//2
+Y, X = np.ogrid[-re:re, -re:re]
+index = ((X**2 + Y**2 >= ri**2)) & ((X**2 + Y**2 <= re**2))
+T[cy-re:cy+re, cx-re:cx+re][index] = Ta
+
+
+#montando as matrizes do sistema linear
+Tcol = T.reshape(pt*pt, 1)
+Tsolution = []
+Tsolution.append(Tcol)
+Tdiag = np.diag(betha * np.ones(pt * pt))
+Tdiag += np.diag(omega * np.ones(pt * pt - 1), k=1)
+Tdiag += np.diag(omega * np.ones(pt * pt - 1), k=-1)
+Tdiag += np.diag(omega * np.ones(pt * pt - pt), k=pt)
+Tdiag += np.diag(omega * np.ones(pt * pt - pt), k=-pt)
+
+#gerando a solução
+for time in range(0, int(t/dt)):
+
+    Tsolve = np.linalg.solve(Tdiag, Tsolution[0])
+    Tsolve[0:pt-1]=0
+    Tsolve[-pt:]=0
+
+    for item in range(0, pt):
+        Tsolve[item*pt-1]=0
+        Tsolve[item*pt] = 0
+
+    Tsolution[0]=Tsolve
+    print(time)
+
+Tsolvida = Tsolve.reshape((pt, pt))
+
+#plot do resultado
+x = np.linspace(0, L, pt)
+y = np.linspace(0, L, pt)
+malhavazia = np.meshgrid(x, y)
+
+#plt.scatter(malhavazia[0], Tsolvida,  facecolors='none', edgecolors='black')
+plt.clf()
+plt.xlabel("x")
+plt.ylabel("y")
+plt.xlim(0, L)
+plt.ylim(0, L)
+plt.imshow(Tsolvida, cmap=plt.cm.jet, vmin=0, vmax=800,
+                   extent=[0, L, L, 0])  # Definindo os limites dos eixos x e y
+plt.colorbar()
+plt.show()
