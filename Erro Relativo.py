@@ -106,7 +106,7 @@ else:
 
     Numérico = calculate(u)
 
-relativeerror = ((np.absolute(Algébrico - Numérico[int(t/Dt)]))/Numérico[int(t/Dt)])*100
+relativeerror = ((np.absolute(Algébrico - Numérico[int(t/Dt)]))/Algébrico)*100
 
 def plotheatmap(relativeerror_k, k):
         # Clear the current plot figure
